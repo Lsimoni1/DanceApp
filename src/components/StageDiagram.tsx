@@ -1,4 +1,6 @@
 import { Stage, Line, Layer } from "react-konva";
+import { useState } from "react";
+import Dancer from "./Dancer";
 
 interface GridProps {
   cellSize?: number;
@@ -36,18 +38,53 @@ const StageGrid = ({ cellSize = 50, width, height }: GridProps) => {
 };
 
 const StageDiagram = () => {
+  const [dancers, setDancers] = useState<{x: number, y: number}[]>([]);
+  const [preview, setPreview] = useState<{x: number, y: number} | null>(null);
+
+  const cellSize = 25;
+  const width = window.innerWidth;
+  const height = window.innerHeight;
+
+  const snapToGrid = (pos: number) => Math.round(pos / cellSize) * cellSize;
+
+  const handleMouseMove = (e: any) => {
+    const stage = e.target.getStage();
+    const pointer = stage.getPointerPosition();
+    if(pointer) {
+      setPreview({
+        x: snapToGrid(pointer.x),
+        y: snapToGrid(pointer.y),
+      });
+    }
+  };
+
+  const handleClick = () => {
+    console.log("stage clicked")
+    if (preview) {
+      setDancers([...dancers, preview]);
+      setPreview(null); //stop preview until next click
+    }
+  }
+
   return (
     <Stage
-      width={window.innerWidth}
-      height={window.innerHeight}
+      width={width}
+      height={height}
       style={{ background: "gray" }}
+      onMouseMove={handleMouseMove}
+      onClick={handleClick}
     >
       <Layer>
         <StageGrid
-          cellSize={25}
-          width={window.innerWidth}
-          height={window.innerHeight}
+          cellSize={cellSize}
+          width={width}
+          height={height}
         />
+
+        {dancers.map((d, i) => (
+          <Dancer key={i} x={d.x} y={d.y} />
+        ))}
+        {preview && <Dancer x={preview.x} y={preview.y} isPreview />}
       </Layer>
     </Stage>
   );
