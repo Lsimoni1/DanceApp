@@ -1,11 +1,12 @@
 import * as React from "react";
 import { Box, IconButton, Divider, Paper, Collapse } from "@mui/material";
-import BrushIcon from "@mui/icons-material/Brush";
-import CropSquareIcon from "@mui/icons-material/CropSquare";
-import CircleIcon from "@mui/icons-material/Circle";
-import FormatColorFillIcon from "@mui/icons-material/FormatColorFill";
-import DeleteIcon from "@mui/icons-material/Delete";
-import MenuIcon from "@mui/icons-material/Menu";
+import AddCircleOutlineIcon from '@mui/icons-material/AddCircleOutline';
+import SwapHorizontalCircleIcon from '@mui/icons-material/SwapHorizontalCircle';
+import CachedIcon from '@mui/icons-material/Cached';
+import RemoveCircleOutlineIcon from '@mui/icons-material/RemoveCircleOutline';
+import OpenWithOutlinedIcon from "@mui/icons-material/OpenWithOutlined";
+import ExpandLessIcon from '@mui/icons-material/ExpandLess';
+import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import Draggable from "react-draggable";
 
 const FloatingToolbar = () => {
@@ -29,15 +30,27 @@ const FloatingToolbar = () => {
           borderRadius: 2,
         }}
       >
-        {/* Drag + toggle button */}
+        {/* Drag Button */}
         <IconButton
           className="drag-handle"
           size="small"
-          onDoubleClick={() => setOpen(!open)}
         >
-          <MenuIcon />
+          <OpenWithOutlinedIcon />
         </IconButton>
 
+        {/* Collapse Button */}
+        <IconButton
+          className="collapse-handle"
+          size="large"
+          onClick={() => setOpen(!open)}
+        >
+          {open ? <ExpandLessIcon/> : <ExpandMoreIcon/>}
+        </IconButton>
+        
+        {/* If toolbar is open, divider between tool and collapse/drag buttons */}
+        {open ? <Divider flexItem sx={{ my: 1 }} /> : null}
+
+        {/* Tool buttons */}
         <Collapse in={open}>
           <Box
             sx={{
@@ -48,23 +61,26 @@ const FloatingToolbar = () => {
               mt: 1,
             }}
           >
+            {/* Add Dancers */}
             <IconButton>
-              <BrushIcon />
+              <AddCircleOutlineIcon />
             </IconButton>
+
+            {/* Remove Dancers */}
             <IconButton>
-              <CropSquareIcon />
+              <RemoveCircleOutlineIcon />
             </IconButton>
+
+            {/* Move Dancers */}
             <IconButton>
-              <CircleIcon />
+              <SwapHorizontalCircleIcon />
             </IconButton>
-            <Divider flexItem sx={{ my: 1 }} />
+
+            {/* Rotate Dancers */}
             <IconButton>
-              <FormatColorFillIcon />
+              <CachedIcon />
             </IconButton>
-            <Divider flexItem sx={{ my: 1 }} />
-            <IconButton>
-              <DeleteIcon />
-            </IconButton>
+          
           </Box>
         </Collapse>
       </Paper>
