@@ -1,6 +1,7 @@
 //import { useState } from "react";
 import StageDiagram from "./components/StageDiagram";
 import FloatingToolbar from "./components/FloatingToolbar";
+import {ToolProvider} from "./contexts/ToolContext";
 import "./App.css";
 
 function App() {
@@ -8,12 +9,10 @@ function App() {
 
   return (
     <>
-    
-      
-      <StageDiagram/>
-      <FloatingToolbar/>
-
-
+      <ToolProvider>
+        <StageDiagram/>
+        <FloatingToolbar/>
+      </ToolProvider>    
     </>
   );
 }
