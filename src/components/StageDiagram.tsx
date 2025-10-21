@@ -1,6 +1,7 @@
 import { Stage, Line, Layer } from "react-konva";
 import { useState } from "react";
 import Dancer from "./Dancer";
+import { useTool } from "../contexts/ToolContext";
 
 interface GridProps {
   cellSize?: number;
@@ -38,8 +39,9 @@ const StageGrid = ({ cellSize = 50, width, height }: GridProps) => {
 };
 
 const StageDiagram = () => {
-  const [dancers, setDancers] = useState<{x: number, y: number}[]>([]);
-  const [preview, setPreview] = useState<{x: number, y: number} | null>(null);
+  const [dancers, setDancers] = useState<{ x: number; y: number }[]>([]);
+  const [preview, setPreview] = useState<{ x: number; y: number } | null>(null);
+  const { selectedTool } = useTool();
 
   const cellSize = 25;
   const width = window.innerWidth;
@@ -50,7 +52,7 @@ const StageDiagram = () => {
   const handleMouseMove = (e: any) => {
     const stage = e.target.getStage();
     const pointer = stage.getPointerPosition();
-    if(pointer) {
+    if (pointer) {
       setPreview({
         x: snapToGrid(pointer.x),
         y: snapToGrid(pointer.y),
@@ -59,12 +61,32 @@ const StageDiagram = () => {
   };
 
   const handleClick = () => {
-    console.log("stage clicked")
-    if (preview) {
+    console.log("stage clicked");
+
+    if (preview && selectedTool === "delete") {
+      //const dancer = dancers.find(dancer => dancer.x === preview.x && dancer.y === preview.y )
+
+      setDancers((prev) =>
+        prev.filter(
+          (dancer) => !(dancer.x === preview.x && dancer.y === preview.y)
+        )
+      );
+    }
+
+    if (preview && selectedTool === "create") {
+      const exists = dancers.some(
+        (dancer) => dancer.x === preview.x && dancer.y === preview.y
+      );
+
+      if (exists) {
+        console.log("helo");
+        return;
+      }
+
       setDancers([...dancers, preview]);
       setPreview(null); //stop preview until next click
     }
-  }
+  };
 
   return (
     <Stage
@@ -75,16 +97,15 @@ const StageDiagram = () => {
       onClick={handleClick}
     >
       <Layer>
-        <StageGrid
-          cellSize={cellSize}
-          width={width}
-          height={height}
-        />
+        <StageGrid cellSize={cellSize} width={width} height={height} />
 
         {dancers.map((d, i) => (
           <Dancer key={i} x={d.x} y={d.y} />
         ))}
-        {preview && <Dancer x={preview.x} y={preview.y} isPreview />}
+
+        {selectedTool === "create" && preview && (
+          <Dancer x={preview.x} y={preview.y} isPreview />
+        )}
       </Layer>
     </Stage>
   );
