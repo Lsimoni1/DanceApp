@@ -1,5 +1,5 @@
 import { Stage, Line, Layer } from "react-konva";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Dancer from "./Dancer";
 import { useTool } from "../contexts/ToolContext";
 
@@ -41,6 +41,7 @@ const StageGrid = ({ cellSize = 50, width, height }: GridProps) => {
 const StageDiagram = () => {
   const [dancers, setDancers] = useState<{ x: number; y: number }[]>([]);
   const [preview, setPreview] = useState<{ x: number; y: number } | null>(null);
+  const [movingDancer, setMovingDancer] = useState<{ x: number; y: number } | null>(null);
   const { selectedTool } = useTool();
 
   const cellSize = 25;
@@ -63,9 +64,30 @@ const StageDiagram = () => {
   const handleClick = () => {
     console.log("stage clicked");
 
-    if (preview && selectedTool === "delete") {
-      //const dancer = dancers.find(dancer => dancer.x === preview.x && dancer.y === preview.y )
+    //first portion of moving dancer functionality
+    if(preview && selectedTool === "move") {
+      const exists = dancers.some(
+        (dancer) => dancer.x === preview.x && dancer.y === preview.y
+      );
 
+      if(exists) {
+        setMovingDancer(preview);
+        setDancers((prev) =>
+          prev.filter(
+            (dancer) => !(dancer.x === preview.x && dancer.y === preview.y)
+          )
+        );
+      }
+    }
+
+    //second portion of moving dancer functionality
+    if(movingDancer && preview) {
+      setDancers([...dancers, preview]);
+      setMovingDancer(null);
+      setPreview(null);
+    }
+
+    if (preview && selectedTool === "delete") {
       setDancers((prev) =>
         prev.filter(
           (dancer) => !(dancer.x === preview.x && dancer.y === preview.y)
@@ -88,11 +110,26 @@ const StageDiagram = () => {
     }
   };
 
+  //useEffect hook listens to whether the tool selected is changed during
+  //a dancer move, and replaces original dancer if process is interrupted
+  useEffect(() => {
+    if(movingDancer) {
+      setDancers([...dancers, movingDancer]);
+      setMovingDancer(null);
+      setPreview(null);
+    }
+  }, [selectedTool]);
+
+
   return (
     <Stage
       width={width}
       height={height}
-      style={{ background: "gray" }}
+      style={{ background: "gray",
+        cursor: selectedTool === "create" ? "default" : 
+                selectedTool === "delete" ? "not-allowed" :
+                selectedTool === "move" ? "move" : "grab" 
+       }}
       onMouseMove={handleMouseMove}
       onClick={handleClick}
     >
@@ -103,9 +140,10 @@ const StageDiagram = () => {
           <Dancer key={i} x={d.x} y={d.y} />
         ))}
 
-        {selectedTool === "create" && preview && (
+        { (movingDancer || selectedTool === "create") && preview && (
           <Dancer x={preview.x} y={preview.y} isPreview />
         )}
+
       </Layer>
     </Stage>
   );
