@@ -1,16 +1,29 @@
 import { Circle, Group, Arrow, } from "react-konva";
 
-interface DancerProps {
+export interface DancerProps {
     x: number;
     y: number; 
+    id?: string;
     color?: string;
     name?: string;
     isPreview?: boolean; 
+    rotation: number;
 }
 
-const Dancer = ({x, y, color = "red", isPreview = false}: DancerProps) => {
+export const createDancer = (x: number, y: number) => {
+    return {
+        x,
+        y, 
+        id: crypto.randomUUID(),
+        color: "red",
+        isPreview: false,
+        rotation: 0
+    }
+}
+
+const Dancer = ({x, y, color, isPreview, rotation}: DancerProps) => {
     return (
-        <Group x={x} y={y} rotation={180}>
+        <Group x={x} y={y} rotation={rotation}>
             <Circle
                 radius={12.5}
                 fill={isPreview ? "rgba(255, 0, 0, 0.5)" : color}
