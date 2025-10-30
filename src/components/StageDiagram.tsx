@@ -223,8 +223,12 @@ const StageDiagram = () => {
           <Dancer key={dancer.id} {...dancer} />
         ))}
 
-        {(movingDancer || selectedTool === "create") && preview && (
+        {selectedTool === "create" && preview && (
           <Dancer {...preview} isPreview />
+        )}
+
+        {movingDancer && selectedTool === "move" && preview && (
+          <Dancer {...preview} rotation={originalRotation} isPreview />
         )}
       </Layer>
     </Stage>
