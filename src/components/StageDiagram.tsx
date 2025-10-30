@@ -44,8 +44,12 @@ const StageDiagram = () => {
   const [dancers, setDancers] = useState<DancerProps[]>([]);
   const [preview, setPreview] = useState<DancerProps | null>(null);
   const [movingDancer, setMovingDancer] = useState<DancerProps | null>(null);
-  const [rotatingDancer, setRotatingDancer] = useState<DancerProps | null>(null);
-  const [originalRotation, setOriginalRotation] = useState<number | null> (null);
+  const [rotatingDancer, setRotatingDancer] = useState<DancerProps | null>(
+    null
+  );
+  const [originalRotation, setOriginalRotation] = useState<number | undefined>(
+    undefined
+  );
 
   const { selectedTool } = useTool();
 
@@ -62,18 +66,24 @@ const StageDiagram = () => {
       setPreview(createDancer(snapToGrid(pointer.x), snapToGrid(pointer.y)));
     }
 
-    if(rotatingDancer) {
+    if (rotatingDancer) {
       const dx = pointer.x - rotatingDancer.x;
       const dy = pointer.y - rotatingDancer.y;
 
-      let getRotationAngle = Math.atan2(dy, dx) * 180 / Math.PI;
+      let getRotationAngle = (Math.atan2(dy, dx) * 180) / Math.PI;
       getRotationAngle += 90;
-      if(getRotationAngle < 0) { getRotationAngle += 360;}
+      if (getRotationAngle < 0) {
+        getRotationAngle += 360;
+      }
       getRotationAngle = Math.round(getRotationAngle / 45) * 45;
 
-      setDancers(prevDancers => prevDancers.map(
-        dancer => dancer.id === rotatingDancer.id ? {...dancer, rotation: getRotationAngle} : dancer
-      ));
+      setDancers((prevDancers) =>
+        prevDancers.map((dancer) =>
+          dancer.id === rotatingDancer.id
+            ? { ...dancer, rotation: getRotationAngle }
+            : dancer
+        )
+      );
     }
   };
 
@@ -81,13 +91,15 @@ const StageDiagram = () => {
     console.log("stage clicked");
 
     //first portion of moving/rotating dancer functionality
-    if(preview && (selectedTool === "move" || selectedTool === "rotate")) {
-      const exists = dancers.some(
-        (dancer) => dancer.x === preview.x && dancer.y ===  preview.y
+    if (preview && (selectedTool === "move" || selectedTool === "rotate")) {
+      const targetDancer = dancers.find(
+        (dancer) => dancer.x === preview.x && dancer.y === preview.y
       );
 
-      if(exists && selectedTool === "move") {
-        setMovingDancer(preview);
+      if (targetDancer && selectedTool === "move") {
+        setMovingDancer(targetDancer);
+        setOriginalRotation(targetDancer.rotation);
+
         setDancers((prevDancers) =>
           prevDancers.filter(
             (dancer) => !(dancer.x === preview.x && dancer.y === preview.y)
@@ -95,40 +107,38 @@ const StageDiagram = () => {
         );
       }
 
-      if(exists && selectedTool === "rotate") {
-        const targetDancer = dancers.find(
-          (dancer) => dancer.x === preview.x && dancer.y ===  preview.y
-        );
-
-        if(targetDancer) {
+      if (targetDancer && selectedTool === "rotate") {
+        if (targetDancer) {
           setRotatingDancer(targetDancer);
           setOriginalRotation(targetDancer.rotation);
 
-          setDancers((prevDancers) =>  
-            prevDancers.map(
-              dancer => 
-                dancer.id === targetDancer.id 
-              ? {...dancer, isPreview: true }
-              : dancer
-            ))
+          setDancers((prevDancers) =>
+            prevDancers.map((dancer) =>
+              dancer.id === targetDancer.id
+                ? { ...dancer, isPreview: true }
+                : dancer
+            )
+          );
         }
       }
     }
 
     //second portion of moving dancer functionality
-    if(movingDancer && preview) {
-      setDancers([...dancers, createDancer(preview.x, preview.y)]);
+    if (movingDancer && preview) {
+      setDancers([
+        ...dancers,
+        createDancer(preview.x, preview.y, originalRotation),
+      ]);
       setMovingDancer(null);
       setPreview(null);
     }
 
     //second portion of rotating dancer functionality
-    if(rotatingDancer && preview) {
+    if (rotatingDancer && preview) {
       setDancers((prevDancers) =>
-        prevDancers.map(
-          dancer => 
-            dancer.id === rotatingDancer.id
-            ? {...dancer, isPreview: false} 
+        prevDancers.map((dancer) =>
+          dancer.id === rotatingDancer.id
+            ? { ...dancer, isPreview: false }
             : dancer
         )
       );
@@ -156,44 +166,53 @@ const StageDiagram = () => {
       }
 
       setDancers([...dancers, createDancer(preview.x, preview.y)]);
-      setPreview(null); 
+      setPreview(null);
     }
   };
 
   // useEffect hook listens to whether the tool selected is changed during
   // a dancer move, and replaces original dancer if process is interrupted
   useEffect(() => {
-    if(movingDancer) {
-      setDancers([...dancers, createDancer(movingDancer.x, movingDancer.y)]);
+    if (movingDancer) {
+      setDancers([
+        ...dancers,
+        createDancer(movingDancer.x, movingDancer.y, originalRotation),
+      ]);
+
       setMovingDancer(null);
+      setOriginalRotation(undefined);
       setPreview(null);
     }
 
-    if(rotatingDancer && originalRotation !== null) {
-      setDancers(prevDancers =>
-        prevDancers.map(
-          dancer =>
-          dancer.id === rotatingDancer.id 
-          ? {...dancer, isPreview: false, rotation: originalRotation} 
-          : dancer
+    if (rotatingDancer && originalRotation !== null) {
+      setDancers((prevDancers) =>
+        prevDancers.map((dancer) =>
+          dancer.id === rotatingDancer.id
+            ? { ...dancer, isPreview: false, rotation: originalRotation }
+            : dancer
         )
       );
 
       setRotatingDancer(null);
-      setOriginalRotation(null);
+      setOriginalRotation(undefined);
     }
   }, [selectedTool]);
-
 
   return (
     <Stage
       width={width}
       height={height}
-      style={{ background: "gray",
-        cursor: selectedTool === "create" ? "default" : 
-                selectedTool === "delete" ? "not-allowed" :
-                selectedTool === "move" ? "move" : "grab" 
-       }}
+      style={{
+        background: "gray",
+        cursor:
+          selectedTool === "create"
+            ? "default"
+            : selectedTool === "delete"
+            ? "not-allowed"
+            : selectedTool === "move"
+            ? "move"
+            : "grab",
+      }}
       onMouseMove={handleMouseMove}
       onClick={handleClick}
     >
@@ -204,10 +223,13 @@ const StageDiagram = () => {
           <Dancer key={dancer.id} {...dancer} />
         ))}
 
-        { (movingDancer || selectedTool === "create") && preview && (
+        {selectedTool === "create" && preview && (
           <Dancer {...preview} isPreview />
         )}
 
+        {movingDancer && selectedTool === "move" && preview && (
+          <Dancer {...preview} rotation={originalRotation} isPreview />
+        )}
       </Layer>
     </Stage>
   );
